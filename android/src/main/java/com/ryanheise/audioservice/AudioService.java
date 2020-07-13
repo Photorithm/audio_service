@@ -145,6 +145,8 @@ public class AudioService extends MediaBrowserServiceCompat implements AudioMana
 		unregisterNoisyReceiver();
 		mediaSession.setActive(false);
 		releaseWakeLock();
+		NotificationManager nMgr = (NotificationManager) getApplicationContext().getSystemService(NOTIFICATION_SERVICE);
+		nMgr.cancel(NOTIFICATION_ID);
 		stopForeground(true);
 		stopSelf();
 	}
