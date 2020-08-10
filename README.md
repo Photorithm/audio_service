@@ -10,36 +10,37 @@ This plugin wraps around your existing audio code to allow it to run in the back
 
 ## How does this plugin work?
 
-You encapsulate your audio code in a background task which runs in a special isolate that continues to run when your UI is absent. Your background task implements callbacks to respond to playback requests coming from your Flutter UI, headset buttons, the lock screen, notification, iOS control center and smart watches:
+You encapsulate your audio code in a background task which runs in a special isolate that continues to run when your UI is absent. Your background task implements callbacks to respond to playback requests coming from your Flutter UI, headset buttons, the lock screen, notification, iOS control center, car displays and smart watches:
 
 ![audio_service_callbacks](https://user-images.githubusercontent.com/19899190/84386442-b305cc80-ac34-11ea-8c2f-1b4cb126a98d.png)
 
 You can implement these callbacks to play any sort of audio that is appropriate for your app, such as music files or streams, audio assets, text to speech, synthesised audio, or combinations of these.
 
-| Feature                            | Android    | iOS       |
-| -------                            | :-------:  | :-----:   |
-| background audio                   | ✅         | ✅        |
-| headset clicks                     | ✅         | ✅        |
-| Handle phonecall interruptions     | ✅         | ✅        |
-| start/stop/play/pause/seek/rate    | ✅         | ✅        |
-| fast forward/rewind                | ✅         | ✅        |
-| queue manipulation, skip next/prev | ✅         | ✅        |
-| custom actions                     | ✅         | ✅        |
-| custom events                      | ✅         | ✅        |
-| notifications/control center       | ✅         | (partial) |
-| lock screen controls               | ✅         | (partial) |
-| album art                          | ✅         | ✅        |
-| Android Auto                       | (untested) |           |
+| Feature                            | Android    | iOS     |
+| -------                            | :-------:  | :-----: |
+| background audio                   | ✅         | ✅      |
+| headset clicks                     | ✅         | ✅      |
+| Handle phonecall interruptions     | ✅         | ✅      |
+| start/stop/play/pause/seek/rate    | ✅         | ✅      |
+| fast forward/rewind                | ✅         | ✅      |
+| repeat/shuffle mode                | ✅         | ✅      |
+| queue manipulation, skip next/prev | ✅         | ✅      |
+| custom actions                     | ✅         | ✅      |
+| custom events                      | ✅         | ✅      |
+| notifications/control center       | ✅         | ✅      |
+| lock screen controls               | ✅         | ✅      |
+| album art                          | ✅         | ✅      |
+| Android Auto, Apple CarPlay        | (untested) | ✅      |
 
 If you'd like to help with any missing features, please join us on the [GitHub issues page](https://github.com/ryanheise/audio_service/issues).
 
-## Migrating to 0.11.0
+## Migrating to 0.13.0
 
-Prior to 0.11.0, the background audio task would terminate as soon as `onStart` completes. From 0.11.0, the background audio task terminates as soon as `onStop` completes. If you override `onStop`, you must end your implementation with a call to `await super.onStop()`.
+As of 0.13.0, all callbacks in `AudioBackgroundTask` are asynchronous. This allows the main isolate to await their completion and better synchronise with the background audio task.
 
-## Migrating to 0.10.0
+As of 0.11.0, the background audio task terminates when `onStop` completes rather than when `onStart` completes.
 
-`audio_service` 0.10.0 requires a different `AndroidManifest.xml` configuration for notification and headset button clicks to continue to work on Android. Your previous broadcast receiver declaration should be replaced with the one below:
+As of 0.10.0, your broadcast receiver in `AndroidManifest.xml` should be replaced with the one below to ensure that headset and notification clicks continue to work:
 
 ```xml
     <receiver android:name="com.ryanheise.audioservice.MediaButtonReceiver" >
@@ -51,7 +52,7 @@ Prior to 0.11.0, the background audio task would terminate as soon as `onStart` 
 
 ## Can I make use of other plugins within the background audio task?
 
-Yes! `audio_service` is designed to let you implement the audio logic however you want, using whatever plugins you want. You can use your favourite audio plugins such as [just_audio](https://pub.dartlang.org/packages/just_audio), [flutter_radio](https://pub.dev/packages/flutter_radio), [flutter_tts](https://pub.dartlang.org/packages/flutter_tts), and others.
+Yes! `audio_service` is designed to let you implement the audio logic however you want, using whatever plugins you want. You can use your favourite audio plugins such as [just_audio](https://pub.dartlang.org/packages/just_audio), [flutter_radio](https://pub.dev/packages/flutter_radio), [flutter_tts](https://pub.dartlang.org/packages/flutter_tts), and others, within your background audio task. There are also plugins like [just_audio_service](https://github.com/yringler/just_audio_service) that provide default implementations of `BackgroundAudioTask` to make your job easier.
 
 Note that this plugin will not work with other audio plugins that overlap in responsibility with this plugin (i.e. background audio, iOS control center, Android notifications, lock screen, headset buttons, etc.)
 
@@ -194,19 +195,7 @@ Additionally:
 </manifest>
 ```
 
-2. Any icons that you want to appear in the notification (see the `MediaControl` class) should be defined as Android resources in `android/app/src/main/res`. Here you will find a subdirectory for each different resolution:
-
-```
-drawable-hdpi
-drawable-mdpi
-drawable-xhdpi
-drawable-xxhdpi
-drawable-xxxhdpi
-```
-
-You can use [Android Asset Studio](https://romannurik.github.io/AndroidAssetStudio/) to generate these different subdirectories for any standard material design icon.
-
-Starting from Flutter 1.12, you will also need to disable the `shrinkResources` setting in your `android/app/build.gradle` file, otherwise your icon resources will be removed during the build:
+2. Starting from Flutter 1.12, you will need to disable the `shrinkResources` setting in your `android/app/build.gradle` file, otherwise the icon resources used in the Android notification will be removed during the build:
 
 ```
 android {
@@ -242,6 +231,3 @@ The example project may be consulted for context.
 * [Full example](https://github.com/ryanheise/audio_service/blob/master/example/lib/main.dart): The `example` subdirectory on GitHub demonstrates both music and text-to-speech use cases.
 * [Frequently Asked Questions](https://github.com/ryanheise/audio_service/wiki/FAQ)
 * [API documentation](https://pub.dev/documentation/audio_service/latest/audio_service/audio_service-library.html)
-
-# Community Projects
-* [just_audio_service](https://github.com/yringler/just_audio_service): A plugin which contains an implementation of `BackgroundAudioTask` which works with [just_audio](https://github.com/ryanheise/just_audio). It aims to be robust, flexible, and mantainable. It is stable enough that it's being used in production by the author, but it is not feature complete (See the [project README](https://github.com/yringler/just_audio_service/blob/master/README.md) for details).

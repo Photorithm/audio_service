@@ -1,3 +1,18 @@
+## 0.13.0
+
+* All BackgroundAudioTask callbacks are now async.
+* Add default implementation of onSkipToNext/onSkipToPrevious.
+* Bug fixes.
+
+## 0.12.0
+
+* Add setRepeatMode/setShuffleMode.
+* Enable iOS Control Center buttons based on setState.
+* Support seek forward/backward in iOS Control Center.
+* Add default behaviour to BackgroundAudioTask.
+* Bug fixes.
+* Simplify example.
+
 ## 0.11.2
 
 * Fix bug with album metadata on Android.
